@@ -1,75 +1,71 @@
-# React + TypeScript + Vite
+# NEWITY Lender Comparison (V1)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A salesperson-facing tool for live borrower calls. It narrows a static lender dataset to **Potential Matches** from a few details typically collected on the call, then lets the salesperson compare a short list of programs.
 
-Currently, two official plugins are available:
+Results are not underwriting decisions and are not labeled Eligible or Approved.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## What V1 does
 
-## React Compiler
+- Loads `src/data/lenders.csv` in the browser and normalizes it into a typed program model
+- Collects loan amount, business type, years in business, and credit tier
+- Validates those inputs before matching
+- Returns matching programs with why they matched and which requirements still need confirmation
+- Shows a no-match message when nothing in the current dataset fits
+- Lets the salesperson select up to 3 matches for a side-by-side comparison
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Local setup
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+Then open the URL Vite prints (usually `http://localhost:5173`).
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Optional: `npm test` runs the matching tests; `npm run build` typechecks and builds.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Architecture
 
-```
+React + TypeScript + Vite. CSV parsing (Papa Parse) and normalization run client-side at startup. Matching is a pure function in `src/domain/matching.ts` and does not depend on React. There is no backend, database, routing, or global state library. Comparison selection is React `useState` in `App.tsx`.
+
+## Matching rules
+
+A program is a Potential Match when all of the following are true:
+
+1. Loan amount is between the program minimum and maximum (inclusive)
+2. Years in business is at least the program minimum
+3. Business type equals the program’s type, or the program accepts `All`
+4. Borrower credit tier meets or exceeds the program’s required tier
+
+## Important assumptions
+
+- Credit-tier order is **Excellent > Good > Fair**
+- The rough credit tier is **not** converted into a numeric credit score
+- Results are **Potential Matches**, not underwriting approvals
+- Matching uses only information a salesperson typically has on a normal call
+
+## Criteria not evaluated automatically
+
+These fields are shown as information to confirm. They do **not** automatically disqualify a borrower, because the normal call workflow does not provide enough data to evaluate them safely:
+
+- Minimum credit score (`minCreditScore`)
+- Maximum existing debt ratio
+- Collateral requirement / availability
+- Special requirements
+
+## Testing
+
+Vitest covers the V1 matching rules (loan bounds, years in business, business type including `All`, and credit-tier ordering) plus contextual match-explanation copy. Run `npm test`.
+
+## Intentionally deferred
+
+- Persistence, routing, auth, and a backend
+- Sorting, extra filters, sharing/export
+- Treating unused lender fields as hard eligibility rules
+- Polished design system / card comparison beyond the current table
+
+## What I would build next
+
+1. When the call workflow can collect them, optional borrower fields for credit score, debt ratio, and collateral, and only then use those lender fields in matching
+2. Lightweight ranking among Potential Matches (for example rate or turnaround) without implying approval
+3. Stronger dataset hygiene (duplicate program keys, stale `last_updated`) before adding more lenders
