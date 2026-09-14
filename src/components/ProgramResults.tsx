@@ -14,15 +14,23 @@ export function ProgramResults({ matches }: ProgramResultsProps) {
         gap: 16,
         width: '100%',
         maxWidth: 560,
+        textAlign: 'left',
       }}
     >
-      {matches.map(({ program, matchReasons }) => (
-        <ProgramCard
-          key={`${program.lenderName}-${program.programType}`}
-          program={program}
-          matchReasons={matchReasons}
-        />
-      ))}
+      {matches.length === 0 ? (
+        <p>
+          No programs in the current lender dataset match the information provided.
+          Adjust the borrower criteria and try again.
+        </p>
+      ) : (
+        matches.map(({ program, matchReasons }) => (
+          <ProgramCard
+            key={`${program.lenderName}-${program.programType}`}
+            program={program}
+            matchReasons={matchReasons}
+          />
+        ))
+      )}
     </div>
   )
 }

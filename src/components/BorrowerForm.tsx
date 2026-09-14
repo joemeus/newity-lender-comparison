@@ -11,14 +11,34 @@ type BorrowerFormProps = {
   onSubmit: (borrower: BorrowerInput) => void
 }
 
+type FieldErrors = {
+  loanAmount?: string
+  businessType?: string
+  yearsInBusiness?: string
+  creditTier?: string
+}
+
 export function BorrowerForm({ onSubmit }: BorrowerFormProps) {
   const [loanAmount, setLoanAmount] = useState('')
   const [businessType, setBusinessType] = useState('')
   const [yearsInBusiness, setYearsInBusiness] = useState('')
   const [creditTier, setCreditTier] = useState('')
+  const [errors, setErrors] = useState<FieldErrors>({})
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+
+    const nextErrors = validateBorrowerForm({
+      loanAmount,
+      businessType,
+      yearsInBusiness,
+      creditTier,
+    })
+    setErrors(nextErrors)
+
+    if (nextErrors.loanAmount || nextErrors.businessType || nextErrors.yearsInBusiness || nextErrors.creditTier) {
+      return
+    }
 
     onSubmit({
       loanAmount: Number(loanAmount),
@@ -29,28 +49,40 @@ export function BorrowerForm({ onSubmit }: BorrowerFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ textAlign: 'left', width: '100%', maxWidth: 420 }}>
+    <form
+      noValidate
+      onSubmit={handleSubmit}
+      style={{ textAlign: 'left', width: '100%', maxWidth: 420 }}
+    >
       <label style={{ display: 'block', marginBottom: 16 }}>
         Loan amount
         <input
           type="number"
           name="loanAmount"
-          required
-          min={0}
           step={1}
           value={loanAmount}
-          onChange={(event) => setLoanAmount(event.target.value)}
+          aria-invalid={errors.loanAmount ? true : undefined}
+          aria-describedby={errors.loanAmount ? 'loanAmount-error' : undefined}
+          onChange={(event) => {
+            setLoanAmount(event.target.value)
+            setErrors((current) => ({ ...current, loanAmount: undefined }))
+          }}
           style={{ display: 'block', width: '100%', marginTop: 6, padding: 8, boxSizing: 'border-box' }}
         />
+        <FieldError id="loanAmount-error" message={errors.loanAmount} />
       </label>
 
       <label style={{ display: 'block', marginBottom: 16 }}>
         Business type
         <select
           name="businessType"
-          required
           value={businessType}
-          onChange={(event) => setBusinessType(event.target.value)}
+          aria-invalid={errors.businessType ? true : undefined}
+          aria-describedby={errors.businessType ? 'businessType-error' : undefined}
+          onChange={(event) => {
+            setBusinessType(event.target.value)
+            setErrors((current) => ({ ...current, businessType: undefined }))
+          }}
           style={{ display: 'block', width: '100%', marginTop: 6, padding: 8, boxSizing: 'border-box' }}
         >
           <option value="" disabled>
@@ -62,6 +94,7 @@ export function BorrowerForm({ onSubmit }: BorrowerFormProps) {
             </option>
           ))}
         </select>
+        <FieldError id="businessType-error" message={errors.businessType} />
       </label>
 
       <label style={{ display: 'block', marginBottom: 16 }}>
@@ -69,22 +102,30 @@ export function BorrowerForm({ onSubmit }: BorrowerFormProps) {
         <input
           type="number"
           name="yearsInBusiness"
-          required
-          min={0}
           step={1}
           value={yearsInBusiness}
-          onChange={(event) => setYearsInBusiness(event.target.value)}
+          aria-invalid={errors.yearsInBusiness ? true : undefined}
+          aria-describedby={errors.yearsInBusiness ? 'yearsInBusiness-error' : undefined}
+          onChange={(event) => {
+            setYearsInBusiness(event.target.value)
+            setErrors((current) => ({ ...current, yearsInBusiness: undefined }))
+          }}
           style={{ display: 'block', width: '100%', marginTop: 6, padding: 8, boxSizing: 'border-box' }}
         />
+        <FieldError id="yearsInBusiness-error" message={errors.yearsInBusiness} />
       </label>
 
       <label style={{ display: 'block', marginBottom: 16 }}>
         Credit tier
         <select
           name="creditTier"
-          required
           value={creditTier}
-          onChange={(event) => setCreditTier(event.target.value)}
+          aria-invalid={errors.creditTier ? true : undefined}
+          aria-describedby={errors.creditTier ? 'creditTier-error' : undefined}
+          onChange={(event) => {
+            setCreditTier(event.target.value)
+            setErrors((current) => ({ ...current, creditTier: undefined }))
+          }}
           style={{ display: 'block', width: '100%', marginTop: 6, padding: 8, boxSizing: 'border-box' }}
         >
           <option value="" disabled>
@@ -96,11 +137,63 @@ export function BorrowerForm({ onSubmit }: BorrowerFormProps) {
             </option>
           ))}
         </select>
+        <FieldError id="creditTier-error" message={errors.creditTier} />
       </label>
 
       <button type="submit" className="counter">
         Find Programs
       </button>
     </form>
+  )
+}
+
+function validateBorrowerForm(values: {
+  loanAmount: string
+  businessType: string
+  yearsInBusiness: string
+  creditTier: string
+}): FieldErrors {
+  const errors: FieldErrors = {}
+
+  const loanAmountText = values.loanAmount.trim()
+  if (loanAmountText === '') {
+    errors.loanAmount = 'Enter a loan amount.'
+  } else {
+    const loanAmount = Number(loanAmountText)
+    if (!Number.isFinite(loanAmount) || loanAmount <= 0) {
+      errors.loanAmount = 'Loan amount must be greater than 0.'
+    }
+  }
+
+  if (values.businessType === '') {
+    errors.businessType = 'Select a business type.'
+  }
+
+  const yearsText = values.yearsInBusiness.trim()
+  if (yearsText === '') {
+    errors.yearsInBusiness = 'Enter years in business.'
+  } else {
+    const yearsInBusiness = Number(yearsText)
+    if (!Number.isFinite(yearsInBusiness) || yearsInBusiness < 0) {
+      errors.yearsInBusiness = 'Years in business must be 0 or greater.'
+    }
+  }
+
+  if (values.creditTier === '') {
+    errors.creditTier = 'Select a credit tier.'
+  }
+
+  return errors
+}
+
+function FieldError({ id, message }: { id: string; message?: string }) {
+  if (!message) {
+    return null
+  }
+
+  return (
+    <p id={id} role="alert" style={{ marginTop: 6, fontSize: 14, color: '#c62828' }}>
+      {message}
+    </p>
   )
 }
