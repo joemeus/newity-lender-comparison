@@ -1,11 +1,20 @@
+import type { LenderProgram } from '../domain/lender.ts'
 import type { ProgramMatch } from '../domain/matching.ts'
 import { ProgramCard } from './ProgramCard.tsx'
 
 type ProgramResultsProps = {
   matches: ProgramMatch[]
+  selectedKeys: string[]
+  compareLimitReached: boolean
+  onToggleCompare: (program: LenderProgram) => void
 }
 
-export function ProgramResults({ matches }: ProgramResultsProps) {
+export function ProgramResults({
+  matches,
+  selectedKeys,
+  compareLimitReached,
+  onToggleCompare,
+}: ProgramResultsProps) {
   return (
     <div
       style={{
@@ -23,13 +32,24 @@ export function ProgramResults({ matches }: ProgramResultsProps) {
           Adjust the borrower criteria and try again.
         </p>
       ) : (
-        matches.map(({ program, matchReasons }) => (
-          <ProgramCard
-            key={`${program.lenderName}-${program.programType}`}
-            program={program}
-            matchReasons={matchReasons}
-          />
-        ))
+        <>
+          {compareLimitReached && (
+            <p>You can compare up to 3 programs. Remove one to add another.</p>
+          )}
+          {matches.map(({ program, matchReasons }) => {
+            const key = `${program.lenderName}-${program.programType}`
+            return (
+              <ProgramCard
+                key={key}
+                program={program}
+                matchReasons={matchReasons}
+                isSelected={selectedKeys.includes(key)}
+                compareLimitReached={compareLimitReached}
+                onToggleCompare={() => onToggleCompare(program)}
+              />
+            )
+          })}
+        </>
       )}
     </div>
   )

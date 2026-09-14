@@ -9,35 +9,65 @@ const currency = new Intl.NumberFormat('en-US', {
 type ProgramCardProps = {
   program: LenderProgram
   matchReasons: string[]
+  isSelected: boolean
+  compareLimitReached: boolean
+  onToggleCompare: () => void
 }
 
-export function ProgramCard({ program, matchReasons }: ProgramCardProps) {
+export function ProgramCard({
+  program,
+  matchReasons,
+  isSelected,
+  compareLimitReached,
+  onToggleCompare,
+}: ProgramCardProps) {
+  const addDisabled = !isSelected && compareLimitReached
+
   return (
     <article
       style={{
         textAlign: 'left',
-        border: '1px solid var(--border)',
+        border: isSelected ? '2px solid var(--accent)' : '1px solid var(--border)',
         borderRadius: 8,
         padding: 16,
         background: 'var(--bg)',
       }}
     >
       <header style={{ marginBottom: 12 }}>
-        <p
-          style={{
-            display: 'inline-block',
-            marginBottom: 8,
-            padding: '2px 8px',
-            fontSize: 13,
-            fontWeight: 600,
-            color: 'var(--accent)',
-            background: 'var(--accent-bg)',
-            border: '1px solid var(--accent-border)',
-            borderRadius: 4,
-          }}
-        >
-          Potential Match
-        </p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+          <p
+            style={{
+              display: 'inline-block',
+              margin: 0,
+              padding: '2px 8px',
+              fontSize: 13,
+              fontWeight: 600,
+              color: 'var(--accent)',
+              background: 'var(--accent-bg)',
+              border: '1px solid var(--accent-border)',
+              borderRadius: 4,
+            }}
+          >
+            Potential Match
+          </p>
+          {isSelected && (
+            <p
+              style={{
+                display: 'inline-block',
+                margin: 0,
+                padding: '2px 8px',
+                fontSize: 13,
+                fontWeight: 600,
+                color: 'var(--text-h)',
+                background: 'var(--code-bg)',
+                border: '1px solid var(--border)',
+                borderRadius: 4,
+              }}
+            >
+              Selected for compare
+            </p>
+          )}
+        </div>
         <h2 style={{ margin: '0 0 4px' }}>{program.lenderName}</h2>
         <p>{program.programType}</p>
       </header>
@@ -85,6 +115,16 @@ export function ProgramCard({ program, matchReasons }: ProgramCardProps) {
           )}
         </ul>
       </section>
+
+      <button
+        type="button"
+        className="counter"
+        onClick={onToggleCompare}
+        disabled={addDisabled}
+        style={{ marginTop: 16, marginBottom: 0, opacity: addDisabled ? 0.55 : 1 }}
+      >
+        {isSelected ? 'Remove from compare' : 'Add to compare'}
+      </button>
     </article>
   )
 }
