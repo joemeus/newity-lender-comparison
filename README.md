@@ -55,17 +55,35 @@ These fields are shown as information to confirm. They do **not** automatically 
 
 ## Testing
 
-Vitest covers the V1 matching rules (loan bounds, years in business, business type including `All`, and credit-tier ordering) plus contextual match-explanation copy. Run `npm test`.
+Vitest covers the V1 matching rules, including loan boundaries, years in business, business type (including the `All` wildcard), credit-tier ordering, and contextual match explanations.
+
+I also manually validated representative borrower scenarios against the source CSV, along with invalid-input, no-match, and comparison-limit behavior.
+
+Run:
+
+`npm test`
+
+A production build can be verified with:
+
+`npm run build`
 
 ## Intentionally deferred
 
-- Persistence, routing, auth, and a backend
-- Sorting, extra filters, sharing/export
-- Treating unused lender fields as hard eligibility rules
-- Polished design system / card comparison beyond the current table
+- Persistence, authentication, routing, and backend infrastructure
+- Saving or sharing borrower comparisons
+- Manager recommendation analytics
+- Automated lender-rate updates
+- Additional borrower criteria that are not consistently available during a live call
+- Advanced sorting or recommendation ranking
 
 ## What I would build next
 
-1. When the call workflow can collect them, optional borrower fields for credit score, debt ratio, and collateral, and only then use those lender fields in matching
-2. Lightweight ranking among Potential Matches (for example rate or turnaround) without implying approval
-3. Stronger dataset hygiene (duplicate program keys, stale `last_updated`) before adding more lenders
+1. **Rate freshness and data-update workflow** — make stale lender data obvious and provide a reliable way to refresh the dataset as rates change.
+2. **Additional borrower qualification criteria** — if the sales workflow can reliably capture exact credit score, debt ratio, or collateral information, incorporate those fields into matching rather than leaving them as requirements to confirm.
+3. **Borrower-friendly comparison sharing** — allow a salesperson to save or share a clean summary of selected programs after the call.
+
+## AI usage
+
+AI was used throughout the full development lifecycle, including problem analysis, scope prioritization, data modeling, implementation, testing, and documentation.
+
+See [`ai_usage.md`](./ai_usage.md) for a concise summary of how ChatGPT and Cursor were used, including an example where AI-generated output was reviewed and corrected rather than accepted as-is.
