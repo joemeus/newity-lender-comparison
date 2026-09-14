@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { BorrowerInput } from './borrower.ts'
 import type { LenderProgram } from './lender.ts'
-import { doesProgramMatch } from './matching.ts'
+import { doesProgramMatch, explainMatch } from './matching.ts'
 
 const baseProgram: LenderProgram = {
   lenderName: 'Test Lender',
@@ -118,5 +118,46 @@ describe('doesProgramMatch', () => {
     expect(
       doesProgramMatch(program({ creditTierRequired: 'Good' }), borrower({ creditTier: 'Fair' })),
     ).toBe(false)
+  })
+})
+
+describe('explainMatch', () => {
+  it('describes loan amount against the program range', () => {
+    expect(
+      explainMatch(
+        program({ minLoanAmount: 10000, maxLoanAmount: 250000 }),
+        borrower({ loanAmount: 250000 }),
+      )[0],
+    ).toBe("$250,000 is within this program's $10,000–$250,000 range")
+  })
+
+  it('describes years in business against the program minimum', () => {
+    expect(
+      explainMatch(program({ minYearsInBusiness: 1 }), borrower({ yearsInBusiness: 3 }))[1],
+    ).toBe('3 years in business meets the 1-year minimum')
+  })
+
+  it('explains All as accepting any business type', () => {
+    expect(
+      explainMatch(
+        program({ eligibleBusinessTypes: 'All' }),
+        borrower({ businessType: 'Retail' }),
+      )[2],
+    ).toBe('Retail is accepted because this program accepts all business types')
+  })
+
+  it('explains a specific matching business type', () => {
+    expect(
+      explainMatch(
+        program({ eligibleBusinessTypes: 'Retail' }),
+        borrower({ businessType: 'Retail' }),
+      )[2],
+    ).toBe("Retail matches this program's eligible business type")
+  })
+
+  it('explains credit tier against the required tier', () => {
+    expect(
+      explainMatch(program({ creditTierRequired: 'Fair' }), borrower({ creditTier: 'Good' }))[3],
+    ).toBe('Good credit meets the Fair tier requirement')
   })
 })
