@@ -11,6 +11,12 @@ import './App.css'
 
 const COMPARE_LIMIT = 3
 
+const currency = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  maximumFractionDigits: 0,
+})
+
 const lenderPrograms = parseAndNormalizeLenders(csvText)
 const uniqueLenderCount = new Set(
   lenderPrograms.map((program) => program.lenderName),
@@ -20,11 +26,20 @@ function programKey(program: LenderProgram) {
   return `${program.lenderName}-${program.programType}`
 }
 
+function formatBorrowerSummary(borrower: BorrowerInput) {
+  const yearsLabel =
+    borrower.yearsInBusiness === 1 ? '1 year' : `${borrower.yearsInBusiness} years`
+
+  return `${currency.format(borrower.loanAmount)} · ${borrower.businessType} · ${yearsLabel} · ${borrower.creditTier} credit`
+}
+
 function App() {
   const [matches, setMatches] = useState<ProgramMatch[] | null>(null)
+  const [submittedBorrower, setSubmittedBorrower] = useState<BorrowerInput | null>(null)
   const [comparedPrograms, setComparedPrograms] = useState<LenderProgram[]>([])
 
   function handleSubmit(borrower: BorrowerInput) {
+    setSubmittedBorrower(borrower)
     setMatches(findMatchingPrograms(borrower, lenderPrograms))
     setComparedPrograms([])
   }
@@ -46,22 +61,42 @@ function App() {
 
   return (
     <section id="center">
-      <h1>Lender comparison</h1>
-      <p>Enter the borrower details, then find matching programs.</p>
-      <BorrowerForm onSubmit={handleSubmit} />
-      {matches !== null && (
-        <>
-          <ProgramComparison programs={comparedPrograms} onRemove={toggleCompare} />
-          <ProgramResults
-            matches={matches}
-            selectedKeys={selectedKeys}
-            compareLimitReached={comparedPrograms.length >= COMPARE_LIMIT}
-            onToggleCompare={toggleCompare}
-          />
-        </>
-      )}
-      <p>Total lender programs loaded: {lenderPrograms.length}</p>
-      <p>Total unique lenders loaded: {uniqueLenderCount}</p>
+      <header className="app-header">
+        <h1>Lender comparison</h1>
+        <p>Enter the borrower details, then find matching programs.</p>
+      </header>
+
+      <div className="workspace">
+        <aside className="workspace-form">
+          <div className="borrower-panel">
+            <BorrowerForm onSubmit={handleSubmit} />
+          </div>
+          <p>Total lender programs loaded: {lenderPrograms.length}</p>
+          <p>Total unique lenders loaded: {uniqueLenderCount}</p>
+        </aside>
+
+        <div className="workspace-results">
+          {matches === null || submittedBorrower === null ? (
+            <p>Potential Matches will appear here after you search.</p>
+          ) : (
+            <>
+              <div className="results-header">
+                <h2>
+                  {`${matches.length} Potential Match${matches.length === 1 ? '' : 'es'}`}
+                </h2>
+                <p>{formatBorrowerSummary(submittedBorrower)}</p>
+              </div>
+              <ProgramComparison programs={comparedPrograms} onRemove={toggleCompare} />
+              <ProgramResults
+                matches={matches}
+                selectedKeys={selectedKeys}
+                compareLimitReached={comparedPrograms.length >= COMPARE_LIMIT}
+                onToggleCompare={toggleCompare}
+              />
+            </>
+          )}
+        </div>
+      </div>
     </section>
   )
 }

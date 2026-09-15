@@ -22,7 +22,7 @@ export function ProgramResults({
         flexDirection: 'column',
         gap: 16,
         width: '100%',
-        maxWidth: 560,
+        maxWidth: '100%',
         textAlign: 'left',
       }}
     >
